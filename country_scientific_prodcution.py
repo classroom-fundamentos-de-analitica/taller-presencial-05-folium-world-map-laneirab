@@ -3,33 +3,17 @@
 import pandas as pd
 import folium
 
+
 def load_affiliations():
-    """
-    Load the affiliations from the web and return a dataframe
-
-    Returns:
-        - dataframe: a pandas dataframe with the affiliations
-    """
-    dataframe = pd.read_csv(
-        "https://raw.githubusercontent.com/jdvelasq/datalabs/master/datasets/scopus-papers.csv",
-        sep=",",
-        index_col=None,
-    )[['Affiliations']]
+    """Load affiliations from scopus-papers.csvi"""
+    dataframe = pd.read_csv("https://raw.githubusercontent.com/jdvelasq/datalabs/master/datasets/scopus-papers.csv", sep=",", index_col=None)[['Affiliations']]
     return dataframe
 
-def remone_na_rows(affiliations):
-    """
-    Remove the rows with NA values in the dataframe
-
-    Args:
-        - affiliations: a pandas dataframe with the affiliations
-
-    Returns:
-        - dataframe: a pandas dataframe with the affiliations without NA values
-    """
+def remove_na_rows(affiliations):
+    """Elimina las filas con valores nulos en la columna 'Affiliations'"""
     affiliations = affiliations.copy()
-    dataframe = affiliations.dropna(subset=['Affiliations'])
-    return dataframe
+    affiliations = affiliations.dropna(subset=["Affiliations"])
+    return affiliations
 
 def add_countries_column(affiliations):
     """Transforma la columna 'Affiliations' a una lista de paises."""
@@ -47,7 +31,7 @@ def add_countries_column(affiliations):
     affiliations["countries"] = affiliations["countries"].str.join(", ")
 
     return affiliations
-
+  
 def clean_countries(affiliations):
 
     affiliations = affiliations.copy()
@@ -63,9 +47,7 @@ def count_country_frequency(affiliations):
     countries = countries.str.split(", ")
     countries = countries.explode()
     countries = countries.value_counts()
-
     return countries
-
 
 def plot_world_map(countries):
     """Grafica un mapa mundial con la frecuencia de cada país."""
@@ -83,18 +65,16 @@ def plot_world_map(countries):
         key_on="feature.properties.name",
         fill_color="Greens",
     ).add_to(m)
-
     m.save("map.html")
-
+  
 def main():
     """Función principal"""
     affiliations = load_affiliations()
-    affiliations = remone_na_rows(affiliations)
+    affiliations = remove_na_rows(affiliations)
     affiliations = add_countries_column(affiliations)
     affiliations = clean_countries(affiliations)
     countries = count_country_frequency(affiliations)
-    countries_two = countries.rename_axis("country")
-    countries_two.to_csv("countries.csv")
+    countries.to_csv("countries.csv")
     plot_world_map(countries)
 
 if __name__ == "__main__":
