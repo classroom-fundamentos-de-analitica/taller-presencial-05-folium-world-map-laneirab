@@ -3,24 +3,33 @@
 import pandas as pd
 import folium
 
-
 def load_affiliations():
-    """Carga el archivo scopus-papers.csv y retorna un dataframe con la columna 'Affiliations'"""
-    df = pd.read_csv(
+    """
+    Load the affiliations from the web and return a dataframe
+
+    Returns:
+        - dataframe: a pandas dataframe with the affiliations
+    """
+    dataframe = pd.read_csv(
         "https://raw.githubusercontent.com/jdvelasq/datalabs/master/datasets/scopus-papers.csv",
         sep=",",
         index_col=None,
-    )[["Affiliations"]]
+    )[['Affiliations']]
+    return dataframe
 
-    return df
+def remone_na_rows(affiliations):
+    """
+    Remove the rows with NA values in the dataframe
 
+    Args:
+        - affiliations: a pandas dataframe with the affiliations
 
-def remove_na_rows(affiliations):
+    Returns:
+        - dataframe: a pandas dataframe with the affiliations without NA values
+    """
     affiliations = affiliations.copy()
-    affiliations = affiliations.dropna(subset="Affiliations")
-
-    return affiliations
-
+    dataframe = affiliations.dropna(subset=['Affiliations'])
+    return dataframe
 
 def add_countries_column(affiliations):
     """Transforma la columna 'Affiliations' a una lista de paises."""
@@ -29,25 +38,23 @@ def add_countries_column(affiliations):
     affiliations["countries"] = affiliations["Affiliations"].copy()
     affiliations["countries"] = affiliations["countries"].str.split(";")
     affiliations["countries"] = affiliations["countries"].map(
-        lambda x: [v.split(",") for v in x]
+        lambda x: [y.split(",") for y in x]
     )
     affiliations["countries"] = affiliations["countries"].map(
-        lambda x: [v[-1].strip() for v in x]
+        lambda x: [y[-1].strip() for y in x]
     )
     affiliations["countries"] = affiliations["countries"].map(set)
     affiliations["countries"] = affiliations["countries"].str.join(", ")
 
     return affiliations
 
-
 def clean_countries(affiliations):
+
     affiliations = affiliations.copy()
     affiliations["countries"] = affiliations["countries"].str.replace(
         "United States", "United States of America"
     )
-
     return affiliations
-
 
 def count_country_frequency(affiliations):
     """Cuenta la frecuencia de cada país en la columna 'countries'"""
@@ -79,17 +86,16 @@ def plot_world_map(countries):
 
     m.save("map.html")
 
-
 def main():
     """Función principal"""
     affiliations = load_affiliations()
-    affiliations = remove_na_rows(affiliations)
+    affiliations = remone_na_rows(affiliations)
     affiliations = add_countries_column(affiliations)
     affiliations = clean_countries(affiliations)
     countries = count_country_frequency(affiliations)
-    countries.to_csv("countries.csv")
+    countries_two = countries.rename_axis("country")
+    countries_two.to_csv("countries.csv")
     plot_world_map(countries)
-
 
 if __name__ == "__main__":
     main()
